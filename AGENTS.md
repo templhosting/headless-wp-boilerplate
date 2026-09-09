@@ -221,8 +221,15 @@ Configuration lives in `.templ.mjs` (gitignored, names real servers); `.templ.mj
 What ships is `wp-content` and only `wp-content`, the same contract the dev stack keeps: core, uploads and `wp-config.php` live on the server and a deploy never touches them.
 
 **On an existing install the MU plugin must be deployed before the feature plugins are activated**, because the feature plugins refuse to bootstrap without it (they degrade to an admin notice rather than a fatal, so a missed step is visible, not a white screen).
+Both land in the same rsync, so a first deploy is self-sufficient.
 
 The example `sshCmd` activates the plugins for a single site; a multisite target adds `--network` to the activate.
+
+**`pnpm run deploy` exits 0 even when the deploy failed.**
+A failing rsync is logged and swallowed, `sshCmd` then runs against files that never landed, and the process still exits 0.
+Nothing may treat that exit status as proof, which is why the runbook in the `templ-hosting` skill verifies over SSH afterwards rather than trusting the command.
+
+The full deploy runbook, the WP-CLI-over-SSH form and the panel-only multisite toggle live in `.agents/skills/templ-hosting/SKILL.md`.
 
 ## Extension points
 

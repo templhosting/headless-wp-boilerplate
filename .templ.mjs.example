@@ -1,16 +1,18 @@
-// Templ deploy configuration. Copy to .templ.mjs and fill in the real host,
-// port and app id for each target. .templ.mjs is gitignored because it names
-// servers; only this example is committed.
+// Templ deploy configuration. Copy to .templ.mjs and fill in the real app id,
+// host and port from the Templ panel (Website > Overview > SFTP/SSH).
+// .templ.mjs is gitignored because it names real servers; only this example is
+// committed.
 //
 // What ships is the wp-content overlay -- mu-plugins, plugins and the theme --
 // and nothing else. WordPress core, uploads and wp-config.php live on the
 // server and are never touched by a deploy, which is the same contract the dev
 // stack keeps: this repo owns wp-content and only wp-content.
 //
-// Usage (always `pnpm run deploy`; bare `pnpm deploy` is a reserved builtin):
+// Usage (always `pnpm run deploy`; bare `pnpm deploy` is a reserved builtin,
+// and flags need the `--` separator so pnpm passes them through):
 //   pnpm run deploy production
 //   pnpm run deploy                 # target defaults to the current git branch
-//   pnpm run deploy production -- --dry     # print the rsync command, run nothing
+//   pnpm run deploy production -- --dry     # print the commands, run nothing
 //   pnpm run deploy production -- --delete  # remove server files absent from here
 
 const config = {
@@ -32,30 +34,45 @@ const config = {
 
 	templs: {
 		production: {
-			app: 0000, // Templ app id, from the Templ panel.
-			host: 'your-server.templ.io', // The SSH host from the Templ panel.
-			port: 22,
+			// From the Templ panel. The app id is the only thing most targets
+			// need: `user` defaults to `user_<app>` and `dst` to `app_<app>/`.
+			app: 1234,
+			host: 'sweden1.templssh.com',
+			// Templ assigns a high port per site. It is never 22, so copy it
+			// from the panel: leaving it out sends the connection to 22, where
+			// it fails rather than falling back to anything useful.
+			port: 12345,
 
-			// Land the overlay in the live wp-content. Adjust the app_<id> path
-			// to wherever the document root's wp-content is on the target.
-			dst: 'app_0000/public/wp-content',
-
-			// Runs on the server after the files are in place. Activates the
-			// plugins and flushes rewrites so a brand-new plugin is live without
-			// a manual admin visit. wp-cli is expected on the Templ host.
+			// Land the overlay in the live wp-content.
 			//
-			// This is the single-site form. If the target runs multisite, add
-			// --network to the activate:
+			// {{app_dir}} expands to the bare app id, not to `app_<id>`, so the
+			// `app_` prefix has to be written out. The name reads like it
+			// includes it; it does not.
+			dst: 'app_{{app_dir}}/public/wp-content',
+
+			// Optional: a specific private key, when the agent or CI cannot use
+			// the default ~/.ssh identity.
+			// sshId: '~/.ssh/id_ed25519_templ',
+
+			// Runs on the server after the files are in place, from inside dst
+			// -- so the working directory is wp-content, not the webroot.
+			// WP-CLI walks up to find wp-config.php, so plain `wp` works here.
+			//
+			// Activating is idempotent and cheap, and it is what makes a first
+			// deploy self-sufficient: the MU plugin lands in the same rsync, so
+			// the feature plugins find their dependency already present.
+			//
+			// This is the single-site form. A multisite target needs --network:
 			//   wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard
 			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter && wp rewrite flush --hard',
 		},
 
 		// A second target, reached with `pnpm run deploy staging`.
 		staging: {
-			app: 0000,
-			host: 'staging.templ.io',
-			port: 22,
-			dst: 'app_0000/public/wp-content',
+			app: 5678,
+			host: 'sweden1.templssh.com',
+			port: 12346,
+			dst: 'app_{{app_dir}}/public/wp-content',
 			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter && wp rewrite flush --hard',
 		},
 	},
