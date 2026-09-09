@@ -50,6 +50,8 @@ x-wordpress-env: &wordpress-env
 x-wp-content: &wp-content
   - wordpress:/var/www/html
   - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+  - ./wp-content/plugins/templ-contact-form:/var/www/html/wp-content/plugins/templ-contact-form
+  - ./wp-content/plugins/templ-newsletter:/var/www/html/wp-content/plugins/templ-newsletter
   - ./wp-content/themes/templ-headless-theme:/var/www/html/wp-content/themes/templ-headless-theme
 
 services:
