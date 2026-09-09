@@ -118,6 +118,11 @@ services:
     environment:
       <<: *wordpress-env
       SITE_URL: "http://localhost:${TEMPL_HEADLESS_PORT:-8080}"
+      # Slug of the sample subsite created under multisite. Forwarded here
+      # rather than in the anchor because it is provisioning input, like
+      # SITE_URL, and never reaches wp-config.
+      SAMPLE_SITE_SLUG: "${SAMPLE_SITE_SLUG:-customer-one}"
+      SAMPLE_SITE_TITLE: "${SAMPLE_SITE_TITLE:-Customer One}"
     volumes:
       - wordpress:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
@@ -197,6 +202,10 @@ services:
       # Reaches the dev site over the shared network stack, bypassing the host
       # port so the suite does not depend on TEMPL_HEADLESS_PORT being free.
       TEMPL_SITE_INTERNAL_URL: "http://localhost:${TEMPL_HEADLESS_PORT:-8080}"
+      # The suite has to look for the subsite init.sh actually created, so this
+      # forwards the same SAMPLE_SITE_SLUG knob. Without it an overridden slug
+      # provisions one site and the tests go looking for another.
+      TEMPL_SAMPLE_SITE_SLUG: "${SAMPLE_SITE_SLUG:-customer-one}"
     volumes:
       - wordpress:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
@@ -223,6 +232,7 @@ services:
     environment:
       <<: *wordpress-env
       TEMPL_SITE_INTERNAL_URL: "http://localhost:${TEMPL_HEADLESS_PORT:-8080}"
+      TEMPL_SAMPLE_SITE_SLUG: "${SAMPLE_SITE_SLUG:-customer-one}"
     volumes:
       - wordpress:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins

@@ -15,6 +15,7 @@ set -eu
 WP_PATH=/var/www/html
 SITE_URL=${SITE_URL:-http://localhost:8080}
 SAMPLE_SITE_SLUG=${SAMPLE_SITE_SLUG:-customer-one}
+SAMPLE_SITE_TITLE=${SAMPLE_SITE_TITLE:-Customer One}
 ADMIN_USER=${ADMIN_USER:-admin}
 ADMIN_PASSWORD=${ADMIN_PASSWORD:-password}
 ADMIN_EMAIL=${ADMIN_EMAIL:-dev@templ.test}
@@ -107,7 +108,7 @@ if [ "$MULTISITE" = "1" ]; then
 	# boot rather than only under the multisite suite.
 	if ! wp site list --field=url | grep -q "$SITE_URL/$SAMPLE_SITE_SLUG/"; then
 		echo "Creating the sample subsite..."
-		wp site create --slug="$SAMPLE_SITE_SLUG" --title="Customer One" >/dev/null
+		wp site create --slug="$SAMPLE_SITE_SLUG" --title="$SAMPLE_SITE_TITLE" >/dev/null
 	fi
 else
 	if wp core is-installed --network >/dev/null 2>&1; then
