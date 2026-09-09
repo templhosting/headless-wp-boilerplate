@@ -40,6 +40,49 @@ pnpm run deploy production    # rsync wp-content to a Templ host (see Deploy)
 **Never run Composer from a newer PHP than the floor.**
 `config.platform.php` is pinned to `8.3` because dependencies resolved against a newer PHP can install code that does not parse in the runtime the fleet has, which surfaces as a baffling parse error deep inside PHPUnit rather than at the point of the mistake.
 
+## Setting this repo up for a human
+
+When someone asks you to set this boilerplate up for their project, **interview them first and execute second**.
+The wrong shape is a stack booted with default names that has to be torn down once they mention it is for three customer sites.
+Two of the answers below are expensive to change later: multisite mode needs an empty database, and the naming prefixes are spread across `phpcs.xml`, every plugin header and every namespace.
+
+**Ask only what you cannot detect.**
+Check for a container runtime, a free port, an existing `.templ.mjs`, and the current git remote yourself, and raise them only when there is a real choice to make.
+**Never re-ask what they already told you.**
+If they said "this is for our client Northwind", propose `northwind` as the subsite slug and the project name rather than asking again.
+
+1. **What is the project called?**
+   Drives the directory name and the `name` fields in `package.json` and `composer.json`.
+   Then: **rebrand the code too, or keep the `templ-*` prefixes?**
+   Default to keeping them. Renaming means moving `Templ\Headless`, `templ_headless_`, `TEMPL_HEADLESS_` and the text domains together, and `phpcs.xml` is the list.
+
+2. **One site, or many isolated customer sites?**
+   Single-site is the default and the right answer for one site.
+   Multisite only earns its complexity when sites must not see each other's data.
+   If multisite:
+   - **Subdirectory or domain-based network?**
+     This is not cosmetic. A subdirectory network needs the multisite toggle in the Templ Panel, a domain-based one needs every domain attached to the website. The dev stack provisions subdirectory only.
+   - **What should the first subsite be called?**
+     Propose a slug from what they have already said rather than asking cold.
+     Set `SAMPLE_SITE_SLUG` and `SAMPLE_SITE_TITLE` in `.env` before the first boot; they default to `customer-one` / `Customer One` and are only read while provisioning, so changing them afterwards means a reset.
+
+3. **Will this be hosted on Templ?**
+   If no, skip deployment entirely and leave `.templ.mjs` uncreated; the dev stack and the plugins do not care where they end up.
+   If yes:
+   - **Has the website already been created in the Templ panel?**
+     If not, stop and walk them through creating it, because the app id, SSH host and port all come from there and none of them can be guessed.
+   - **Existing SSH key, or generate one?**
+     Generate with `ssh-keygen -t ed25519` if needed, print the **public** key for them to upload in the panel, and verify the connection before the first deploy rather than discovering it inside a failing rsync.
+   - **Just production, or staging too?**
+     `.templ.mjs` takes any number of targets. Scaffold the ones they will use, not a dead `staging` block.
+
+4. **Where should the code live?**
+   Detected, not asked: if `origin` still points at the boilerplate, they need their own remote. Offer to create one.
+
+Then work through the setup steps in `README.md`, confirming each before moving on.
+For anything touching the live Templ site - SSH, WP-CLI, the panel multisite toggle - use the `templ-hosting` skill in `.agents/skills/`.
+Ship the contact form and the newsletter both; removing one touches the compose mounts, `tools/init.sh` and the test suites, and is a deliberate task rather than a setup question.
+
 ## Repo layout
 
 This repository is a `wp-content` overlay, nothing more.
