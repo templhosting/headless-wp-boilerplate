@@ -89,6 +89,8 @@ services:
     volumes:
       - wordpress:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wp-content/plugins/templ-contact-form:/var/www/html/wp-content/plugins/templ-contact-form
+      - ./wp-content/plugins/templ-newsletter:/var/www/html/wp-content/plugins/templ-newsletter
       - ./wp-content/themes/templ-headless-theme:/var/www/html/wp-content/themes/templ-headless-theme
       - ./tools/apache-loopback.conf:/etc/apache2/conf-enabled/templ-loopback.conf:ro
       - ./tools/php-dev.ini:/usr/local/etc/php/conf.d/zz-templ-dev.ini:ro
@@ -111,6 +113,8 @@ services:
     volumes:
       - wordpress:/var/www/html
       - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wp-content/plugins/templ-contact-form:/var/www/html/wp-content/plugins/templ-contact-form
+      - ./wp-content/plugins/templ-newsletter:/var/www/html/wp-content/plugins/templ-newsletter
       - ./wp-content/themes/templ-headless-theme:/var/www/html/wp-content/themes/templ-headless-theme
       - ./tools/init.sh:/init.sh:ro
     entrypoint: ["/bin/sh", "/init.sh"]
@@ -152,6 +156,73 @@ services:
     entrypoint: ["php", "vendor/bin/phpcs"]
     volumes:
       - .:/app
+
+  # The pure-unit suite. WordPress is mocked with Brain Monkey, so this needs
+  # no database and no running site, only the vendor tree.
+  #   podman compose run --rm unit
+  unit:
+    image: docker.io/library/composer:2
+    profiles: ["tools"]
+    working_dir: /app
+    entrypoint: ["php", "vendor/bin/phpunit", "-c", "phpunit.xml"]
+    volumes:
+      - .:/app
+
+  # The integration suite: real HTTP against the running site. It shares the web
+  # container's network stack, so a loopback request to home_url() reaches
+  # Apache and the Authorization header survives the round trip. The repo is
+  # mounted so phpunit and the vendor tree are present alongside wp-load.php.
+  #   podman compose run --rm tests
+  tests:
+    image: docker.io/wordpress:cli-php8.3
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    network_mode: "service:wordpress"
+    user: "33:33"
+    working_dir: /app
+    environment:
+      <<: *wordpress-env
+      # Reaches the dev site over the shared network stack, bypassing the host
+      # port so the suite does not depend on TEMPL_HEADLESS_PORT being free.
+      TEMPL_SITE_INTERNAL_URL: "http://localhost:${TEMPL_HEADLESS_PORT:-8080}"
+    volumes:
+      - wordpress:/var/www/html
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wp-content/plugins/templ-contact-form:/var/www/html/wp-content/plugins/templ-contact-form
+      - ./wp-content/plugins/templ-newsletter:/var/www/html/wp-content/plugins/templ-newsletter
+      - ./wp-content/themes/templ-headless-theme:/var/www/html/wp-content/themes/templ-headless-theme
+      - .:/app
+    entrypoint: ["php", "/app/vendor/bin/phpunit", "-c", "/app/phpunit-integration.xml"]
+
+  # The multisite suite: the same running network, tests that cross site
+  # boundaries.
+  #   podman compose run --rm tests-multisite
+  tests-multisite:
+    image: docker.io/wordpress:cli-php8.3
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+      wordpress:
+        condition: service_started
+    network_mode: "service:wordpress"
+    user: "33:33"
+    working_dir: /app
+    environment:
+      <<: *wordpress-env
+      TEMPL_SITE_INTERNAL_URL: "http://localhost:${TEMPL_HEADLESS_PORT:-8080}"
+    volumes:
+      - wordpress:/var/www/html
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./wp-content/plugins/templ-contact-form:/var/www/html/wp-content/plugins/templ-contact-form
+      - ./wp-content/plugins/templ-newsletter:/var/www/html/wp-content/plugins/templ-newsletter
+      - ./wp-content/themes/templ-headless-theme:/var/www/html/wp-content/themes/templ-headless-theme
+      - .:/app
+    entrypoint: ["php", "/app/vendor/bin/phpunit", "-c", "/app/phpunit-multisite.xml"]
 
   # The `Requires PHP` floor, on the interpreter itself: every file has to
   # parse. phpcs answers the same question statically and in more detail, but

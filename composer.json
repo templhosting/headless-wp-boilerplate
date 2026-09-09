@@ -34,6 +34,9 @@
 	"scripts": {
 		"lint": "phpcs",
 		"lint:fix": "phpcbf",
+		"test": "phpunit -c phpunit.xml",
+		"test:integration": "phpunit -c phpunit-integration.xml",
+		"test:multisite": "phpunit -c phpunit-multisite.xml",
 		"dev:up": "podman compose up -d",
 		"dev:down": "podman compose down",
 		"dev:reset": "podman compose down -v && podman compose up -d",
@@ -41,6 +44,8 @@
 		"dev:cli": "podman compose run --rm cli",
 		"dev:install": "podman compose run --rm composer install",
 		"dev:lint": "podman compose run --rm lint",
-		"dev:php-floor": "podman compose run --rm php-floor"
+		"dev:php-floor": "podman compose run --rm php-floor",
+		"dev:test": "podman compose run --rm unit && podman compose run --rm tests",
+		"dev:test:multisite": "podman compose run --rm tests-multisite"
 	}
 }

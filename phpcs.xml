@@ -108,4 +108,33 @@
 	<rule ref="Generic.Commenting.DocComment.MissingShort">
 		<exclude-pattern>/tests/*</exclude-pattern>
 	</rule>
+
+	<!--
+		The unit bootstrap mixes global-namespace WordPress stubs with
+		namespaced ones in a single file, which is exactly what the braced,
+		multi-declaration namespace syntax is for. It is the only place in the
+		repo that needs it, and only because a test harness has to impersonate
+		WordPress' own global surface.
+	-->
+	<rule ref="Universal.Namespaces.DisallowCurlyBraceSyntax">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Universal.Namespaces.DisallowDeclarationWithoutName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Universal.Namespaces.OneDeclarationPerFile">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Universal.Files.SeparateFunctionsFromOO">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+
+	<!--
+		Short ternaries in the bootstraps read the environment with a fallback
+		(getenv(...) ?: default), the one idiom where the elided middle is
+		unambiguous. Confined to tests.
+	-->
+	<rule ref="Universal.Operators.DisallowShortTernary">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
 </ruleset>
