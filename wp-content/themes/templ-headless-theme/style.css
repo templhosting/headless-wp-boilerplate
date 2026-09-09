@@ -1,0 +1,13 @@
+/*
+Theme Name: Templ Headless
+Theme URI: https://templ.io/
+Author: Templ
+Author URI: https://templ.io/
+Description: A theme that renders nothing. WordPress requires an active theme, and this network has no frontend: every request that is not the REST API, the admin or the login screen is redirected to wp-login.php. The frontend lives somewhere else and talks to this site over REST.
+Version: 0.1.0
+Requires at least: 7.1
+Requires PHP: 8.3
+License: MIT
+License URI: https://opensource.org/licenses/MIT
+Text Domain: templ-headless-theme
+*/
