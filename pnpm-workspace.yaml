@@ -1,10 +1,11 @@
+# templ-deploy pulls in ssh2, whose native build is optional: the deploy shells
+# out to the system rsync and ssh, so the compiled binding is never on the path
+# that runs. Both builds are declined deliberately.
+#
+# These have to be answered explicitly. pnpm writes the keys here with a
+# placeholder value and then fails the install with ERR_PNPM_IGNORED_BUILDS
+# until each one is a real boolean -- and because `pnpm run deploy` installs
+# first, an unanswered placeholder breaks deployment, not just `pnpm install`.
 allowBuilds:
-  cpu-features: set this to true or false
-  ssh2: set this to true or false
-# templ-deploy pulls in ssh2, whose native build is optional: the deploy
-# shells out to the system rsync and ssh, so the compiled binding is not on the
-# path that runs. Listing them here is what keeps `pnpm install` from exiting
-# non-zero over an ignored build script we have deliberately declined.
-onlyBuiltDependencies:
-  - cpu-features
-  - ssh2
+  cpu-features: false
+  ssh2: false
