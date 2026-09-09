@@ -1,0 +1,46 @@
+{
+	"name": "templ/headless-wp-backend",
+	"description": "Boilerplate for running WordPress multisite as a headless backend, with per-site API keys and REST endpoints for contact forms and newsletter signups.",
+	"type": "project",
+	"license": "MIT",
+	"require": {
+		"php": ">=8.3"
+	},
+	"require-dev": {
+		"brain/monkey": "^2.6",
+		"dealerdirect/phpcodesniffer-composer-installer": "^1.0",
+		"phpcompatibility/php-compatibility": "10.0.0-alpha2",
+		"phpunit/phpunit": "^9.6",
+		"squizlabs/php_codesniffer": "^3.9",
+		"wp-coding-standards/wpcs": "^3.1"
+	},
+	"autoload-dev": {
+		"psr-4": {
+			"Templ\\Headless\\Tests\\Unit\\": "tests/unit/",
+			"Templ\\Headless\\Tests\\Shared\\": "tests/shared/",
+			"Templ\\Headless\\Tests\\Integration\\": "tests/integration/",
+			"Templ\\Headless\\Tests\\Multisite\\": "tests/multisite/"
+		}
+	},
+	"config": {
+		"allow-plugins": {
+			"dealerdirect/phpcodesniffer-composer-installer": true
+		},
+		"platform": {
+			"php": "8.3"
+		},
+		"sort-packages": true
+	},
+	"scripts": {
+		"lint": "phpcs",
+		"lint:fix": "phpcbf",
+		"dev:up": "podman compose up -d",
+		"dev:down": "podman compose down",
+		"dev:reset": "podman compose down -v && podman compose up -d",
+		"dev:logs": "podman compose logs -f wordpress",
+		"dev:cli": "podman compose run --rm cli",
+		"dev:install": "podman compose run --rm composer install",
+		"dev:lint": "podman compose run --rm lint",
+		"dev:php-floor": "podman compose run --rm php-floor"
+	}
+}

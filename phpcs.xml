@@ -1,0 +1,111 @@
+<?xml version="1.0"?>
+<ruleset name="Templ Headless">
+	<description>Coding standards for the Templ headless WordPress backend.</description>
+
+	<file>.</file>
+
+	<exclude-pattern>/vendor/*</exclude-pattern>
+	<exclude-pattern>/node_modules/*</exclude-pattern>
+
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<arg name="parallel" value="8"/>
+
+	<!--
+		Both mirror the `Requires PHP` and `Requires at least` headers on every
+		plugin and theme in this repo, and the wordpress image tag in
+		compose.yaml. Changing one means changing all four.
+
+		They are not worth the same. testVersion is a real forward check:
+		PHPCompatibility knows which release every construct and function
+		landed in, so reaching for a newer one fails the lint. It is only as
+		good as the sniff database behind it, which is why the php-floor
+		service runs the code on the interpreter as well.
+
+		minimum_wp_version buys none of that. It only drives WPCS' deprecation
+		sniffs, has no forward check for an API newer than the floor, and no
+		suite runs against the oldest supported WordPress, so "Requires at
+		least" stays an assertion nothing can verify.
+	-->
+	<config name="minimum_wp_version" value="7.1"/>
+	<config name="testVersion" value="8.3-"/>
+
+	<rule ref="WordPress">
+		<!-- Namespaced function files, not class files. -->
+		<exclude name="WordPress.Files.FileName.InvalidClassFileName"/>
+
+		<!-- Short arrays, against WPCS' advice: see the rule below. -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+	</rule>
+
+	<rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
+
+	<!--
+		PHPCompatibility rather than PHPCompatibilityWP, which is that ruleset
+		plus exclusions for functions WordPress polyfills. Every one of those
+		exclusions is inert at testVersion 8.3-, so the WP flavour would only
+		widen the blind spot.
+	-->
+	<rule ref="PHPCompatibility"/>
+
+	<!--
+		Everything here lives under Templ\Headless rather than Templ, because
+		templ-companion already owns Templ\Rest, Templ\Cache and the bare
+		TEMPL_ / templ_ prefixes, and both codebases can end up on one site.
+	-->
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="Templ\Headless"/>
+				<element value="TEMPL_HEADLESS_"/>
+				<element value="TEMPL_CONTACT_FORM_"/>
+				<element value="TEMPL_NEWSLETTER_"/>
+				<element value="templ_headless_"/>
+				<element value="templ_contact_form_"/>
+				<element value="templ_newsletter_"/>
+			</property>
+		</properties>
+	</rule>
+
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="templ-headless"/>
+				<element value="templ-headless-theme"/>
+				<element value="templ-contact-form"/>
+				<element value="templ-newsletter"/>
+			</property>
+		</properties>
+	</rule>
+
+	<!--
+		Test code answers to PHPUnit's conventions rather than WordPress':
+		PSR-4 class file names, plain filesystem access and stubs that
+		deliberately impersonate WordPress globals.
+	-->
+	<rule ref="WordPress.Files.FileName">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.PHP.DevelopmentFunctions">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.DB.DirectDatabaseQuery">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.GlobalVariablesOverride">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Squiz.Commenting">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting.DocComment.MissingShort">
+		<exclude-pattern>/tests/*</exclude-pattern>
+	</rule>
+</ruleset>
