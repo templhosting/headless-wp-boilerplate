@@ -1,0 +1,10 @@
+allowBuilds:
+  cpu-features: set this to true or false
+  ssh2: set this to true or false
+# templ-deploy pulls in ssh2, whose native build is optional: the deploy
+# shells out to the system rsync and ssh, so the compiled binding is not on the
+# path that runs. Listing them here is what keeps `pnpm install` from exiting
+# non-zero over an ignored build script we have deliberately declined.
+onlyBuiltDependencies:
+  - cpu-features
+  - ssh2

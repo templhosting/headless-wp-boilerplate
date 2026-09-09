@@ -1,0 +1,28 @@
+{
+  "name": "headless-wp-backend",
+  "version": "0.1.0",
+  "description": "Boilerplate for running WordPress multisite as a headless backend. The runtime is PHP in containers; this package only carries the dev lifecycle shortcuts and the Templ deploy configuration.",
+  "private": true,
+  "license": "MIT",
+  "packageManager": "pnpm@9",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "dev": "podman compose up -d",
+    "dev:down": "podman compose down",
+    "dev:reset": "podman compose down -v && podman compose up -d",
+    "dev:logs": "podman compose logs -f wordpress",
+    "dev:cli": "podman compose run --rm cli",
+    "lint": "podman compose run --rm lint",
+    "lint:fix": "podman compose run --rm --entrypoint 'php vendor/bin/phpcbf' lint",
+    "test": "podman compose run --rm unit && podman compose run --rm tests",
+    "test:unit": "podman compose run --rm unit",
+    "test:integration": "podman compose run --rm tests",
+    "test:multisite": "podman compose run --rm tests-multisite",
+    "deploy": "templ-deploy"
+  },
+  "devDependencies": {
+    "templ-deploy": "github:templhosting/templ-deploy"
+  }
+}

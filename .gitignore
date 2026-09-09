@@ -4,3 +4,6 @@
 .phpunit.result.cache
 *.log
 .DS_Store
+
+# Names real servers; only .templ.mjs.example is committed.
+/.templ.mjs

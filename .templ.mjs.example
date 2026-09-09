@@ -1,0 +1,60 @@
+// Templ deploy configuration. Copy to .templ.mjs and fill in the real host,
+// port and app id for each target. .templ.mjs is gitignored because it names
+// servers; only this example is committed.
+//
+// What ships is the wp-content overlay -- mu-plugins, plugins and the theme --
+// and nothing else. WordPress core, uploads and wp-config.php live on the
+// server and are never touched by a deploy, which is the same contract the dev
+// stack keeps: this repo owns wp-content and only wp-content.
+//
+// Usage:
+//   pnpm deploy production
+//   pnpm deploy                 # target defaults to the current git branch
+//   pnpm deploy production -- --dry     # print the rsync command, run nothing
+//   pnpm deploy production -- --delete  # remove server files absent from here
+
+const config = {
+	options: {
+		// The tree that gets rsynced. Everything under it lands inside the
+		// target's dst directory.
+		dir: 'wp-content',
+
+		// Never let a deploy carry local cruft onto a server.
+		exclude: [
+			'.DS_Store',
+			'*.log',
+			// Feature plugins keep no vendor tree of their own, but exclude it
+			// defensively so a stray composer install cannot bloat a deploy.
+			'**/node_modules',
+			'**/vendor',
+		],
+	},
+
+	templs: {
+		production: {
+			app: 0000, // Templ app id.
+			host: 'your-server.templ.io',
+			port: 22,
+
+			// Land the overlay in the live wp-content. Adjust the app_<id> path
+			// to wherever the document root's wp-content is on the target.
+			dst: 'app_0000/public/wp-content',
+
+			// Runs on the server after the files are in place. Networks the
+			// plugins and flushes rewrites so a brand-new plugin is live without
+			// a manual admin visit. wp-cli is expected on the Templ host.
+			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard',
+		},
+
+		// A second target, reached with `pnpm deploy staging`.
+		staging: {
+			app: 0000,
+			host: 'staging.templ.io',
+			port: 22,
+			dst: 'app_0000/public/wp-content',
+			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard',
+		},
+	},
+};
+
+export default config;
