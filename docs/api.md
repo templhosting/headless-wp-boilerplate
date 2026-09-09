@@ -1,7 +1,8 @@
 # API reference
 
-Every path below is relative to a subsite's REST root, `http://<host>/<subsite>/wp-json`.
-In the dev stack the sample subsite's root is `http://localhost:8080/customer-one/wp-json`.
+Every path below is relative to the site's REST root, `http://<host>/wp-json`.
+In the dev stack that is `http://localhost:8080/wp-json`.
+Under multisite each subsite has its own root at `http://<host>/<subsite>/wp-json`, e.g. `http://localhost:8080/customer-one/wp-json`.
 
 ## Authentication
 
@@ -17,7 +18,7 @@ or, for a client that cannot set `Authorization`:
 X-Templ-Api-Key: thl_<64 hex chars>
 ```
 
-Keys are per subsite: a key minted on `customer-one` returns `401` everywhere else.
+Keys are scoped to the site that minted them; under multisite that means a key minted on `customer-one` returns `401` on every other subsite.
 A key in the query string is refused; it would leak into logs and history.
 
 Common auth errors, all HTTP `401`:
@@ -25,7 +26,7 @@ Common auth errors, all HTTP `401`:
 | Code | When |
 | --- | --- |
 | `templ_headless_missing_key` | No key header on a protected route |
-| `templ_headless_invalid_key` | The key is unknown on this subsite |
+| `templ_headless_invalid_key` | The key is unknown on this site |
 | `templ_headless_revoked_key` | The key exists but has been revoked |
 
 ## Health
@@ -104,7 +105,7 @@ Lists submissions, newest first. Key required.
 
 ### `GET /submissions/<id>`
 
-One submission. Key required. `404 templ_contact_form_not_found` when it does not exist on this subsite.
+One submission. Key required. `404 templ_contact_form_not_found` when it does not exist on this site.
 
 ### `DELETE /submissions/<id>`
 

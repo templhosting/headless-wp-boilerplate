@@ -11,6 +11,8 @@ namespace Templ\Headless\Tests\Shared;
  */
 trait CleansUp {
 
+	use SwitchesSites;
+
 	/**
 	 * Deletes every post of the given types on a site.
 	 *
@@ -19,7 +21,7 @@ trait CleansUp {
 	 * @return void
 	 */
 	protected function purge_posts( int $blog_id, array $post_types ): void {
-		switch_to_blog( $blog_id );
+		$this->switch_to_site( $blog_id );
 
 		foreach ( $post_types as $post_type ) {
 			$ids = get_posts(
@@ -40,7 +42,7 @@ trait CleansUp {
 			}
 		}
 
-		restore_current_blog();
+		$this->restore_site();
 	}
 
 	/**
@@ -53,7 +55,7 @@ trait CleansUp {
 	 * @return void
 	 */
 	protected function reset_rate_limits( int $blog_id ): void {
-		switch_to_blog( $blog_id );
+		$this->switch_to_site( $blog_id );
 
 		global $wpdb;
 
@@ -66,6 +68,6 @@ trait CleansUp {
 			delete_option( $option_name );
 		}
 
-		restore_current_blog();
+		$this->restore_site();
 	}
 }

@@ -1,6 +1,6 @@
 {
-	"name": "templ/headless-wp-backend",
-	"description": "Boilerplate for running WordPress multisite as a headless backend, with per-site API keys and REST endpoints for contact forms and newsletter signups.",
+	"name": "templ/headless-wp-boilerplate",
+	"description": "Boilerplate for running WordPress as a headless backend, single-site by default with an opt-in multisite mode, with per-site API keys and REST endpoints for contact forms and newsletter signups.",
 	"type": "project",
 	"license": "MIT",
 	"require": {
@@ -38,8 +38,10 @@
 		"test:integration": "phpunit -c phpunit-integration.xml",
 		"test:multisite": "phpunit -c phpunit-multisite.xml",
 		"dev:up": "podman compose up -d",
+		"dev:up:multisite": "TEMPL_HEADLESS_MULTISITE=1 podman compose up -d",
 		"dev:down": "podman compose down",
 		"dev:reset": "podman compose down -v && podman compose up -d",
+		"dev:reset:multisite": "podman compose down -v && TEMPL_HEADLESS_MULTISITE=1 podman compose up -d",
 		"dev:logs": "podman compose logs -f wordpress",
 		"dev:cli": "podman compose run --rm cli",
 		"dev:install": "podman compose run --rm composer install",

@@ -16,6 +16,8 @@ use Templ\Headless\Keys\Store;
  */
 trait MintsKeys {
 
+	use SwitchesSites;
+
 	/**
 	 * Key post IDs to delete in teardown, as [ blog_id => [ post_id, ... ] ].
 	 *
@@ -31,13 +33,13 @@ trait MintsKeys {
 	 * @return string The plaintext key.
 	 */
 	protected function mint_key( int $blog_id, string $label = 'test' ): string {
-		switch_to_blog( $blog_id );
+		$this->switch_to_site( $blog_id );
 
 		$key = Store\create( $label );
 
 		$this->minted_keys[ $blog_id ][] = (int) $key['id'];
 
-		restore_current_blog();
+		$this->restore_site();
 
 		return $key['plaintext'];
 	}
@@ -50,14 +52,14 @@ trait MintsKeys {
 	 * @return void
 	 */
 	protected function revoke_key( int $blog_id, string $plaintext ): void {
-		switch_to_blog( $blog_id );
+		$this->switch_to_site( $blog_id );
 
 		$post = \Templ\Headless\Keys\find( $plaintext );
 		if ( null !== $post ) {
 			Store\revoke( (int) $post->ID );
 		}
 
-		restore_current_blog();
+		$this->restore_site();
 	}
 
 	/**
@@ -67,11 +69,11 @@ trait MintsKeys {
 	 */
 	protected function clean_up_keys(): void {
 		foreach ( $this->minted_keys as $blog_id => $ids ) {
-			switch_to_blog( $blog_id );
+			$this->switch_to_site( $blog_id );
 			foreach ( $ids as $id ) {
 				Store\delete( $id );
 			}
-			restore_current_blog();
+			$this->restore_site();
 		}
 
 		$this->minted_keys = [];

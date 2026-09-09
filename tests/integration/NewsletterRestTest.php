@@ -84,10 +84,10 @@ final class NewsletterRestTest extends IntegrationTestCase {
 	public function test_unsubscribe_by_token_needs_no_key(): void {
 		$this->post_json( $this->subsite_url, '/templ-newsletter/v1/subscribers', [ 'email' => 'sub@example.com' ], $this->key );
 
-		switch_to_blog( $this->subsite_id );
+		$this->switch_to_site( $this->subsite_id );
 		$post  = \Templ\Headless\Newsletter\PostType\find_by_email( 'sub@example.com' );
 		$token = get_post_meta( $post->ID, \Templ\Headless\Newsletter\PostType\META_TOKEN, true );
-		restore_current_blog();
+		$this->restore_site();
 
 		$response = $this->get( $this->subsite_url, '/templ-newsletter/v1/unsubscribe?token=' . rawurlencode( $token ) );
 

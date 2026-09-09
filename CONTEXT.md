@@ -7,10 +7,20 @@ Every name here is used consistently in the source, the tests and the docs.
 This file only defines what the words mean.
 When a term drifts or a new concept earns a name, change it here first.
 
-## The network
+## The site
+
+**Site**
+The WordPress install this repo stands up.
+By default there is exactly one, and it serves the whole API.
+Under multisite it becomes the main site of a network, but the base case is a single site with no network at all.
+
+## Multisite (extension)
+
+Multisite is off by default and turned on with `TEMPL_HEADLESS_MULTISITE=1`.
+The terms below only apply once it is on; a single-site install has a `Site` and nothing in this section.
 
 **Network**
-The one WordPress multisite install this repo stands up.
+The WordPress multisite install this repo stands up when multisite is enabled.
 Everything is a subsite of it; there is no second install.
 
 **Subsite**
@@ -33,11 +43,12 @@ The guarantee that a subsite created from Network Admin serves the full API the 
 
 **API key**
 The credential a frontend sends to reach a protected endpoint.
-256 bits of `random_bytes`, prefixed `thl_`, scoped to exactly one subsite.
+256 bits of `random_bytes`, prefixed `thl_`, scoped to the site that minted it.
+Under multisite that scope is one subsite; on a single site it is simply the one site.
 
 **Plaintext key**
 The key as the client holds it.
-Shown once, at creation, and never recoverable: the subsite stores only its hash.
+Shown once, at creation, and never recoverable: the site stores only its hash.
 
 **Key prefix**
 The leading characters of a key, kept in the clear so a human can tell two keys apart in a list.
@@ -45,7 +56,7 @@ Not a secret and not enough to authenticate.
 
 **Digest**
 The SHA-256 of a plaintext key.
-The only copy of the key a subsite ever holds.
+The only copy of the key a site ever holds.
 
 **Revoked**
 A key turned off but kept for the audit trail, so "who called this last month" stays answerable.
@@ -53,12 +64,12 @@ A revoked key authenticates nothing; it is distinct from a deleted one, which le
 
 **Per-site scope**
 The rule that a key minted on one subsite unlocks that subsite and no other.
-Not a feature bolted on; a consequence of the key post type being registered separately on every subsite.
+Only meaningful under multisite; not a feature bolted on, but a consequence of the key post type being registered separately on every subsite.
 
 ## The frontend
 
 **Headless frontend**
-The application an agency builds in front of a subsite.
+The application built in front of a site.
 It owns the public pages; WordPress here serves only JSON and the admin.
 
 **Proxy**
@@ -86,7 +97,7 @@ Five per hour by default, changeable through a filter.
 ## Newsletter
 
 **Subscriber**
-One email address on a subsite's list, carrying a status and an unsubscribe token.
+One email address on a site's list, carrying a status and an unsubscribe token.
 The email is the post title, which is what makes the admin search and the idempotent subscribe work.
 
 **Single opt-in**
@@ -103,7 +114,7 @@ The one credential in this repo that is not an API key.
 
 ## Words we do not use
 
-- **"customer"** where `subsite` or `tenant` is meant. A customer is a person; a subsite is a thing.
+- **"customer"** where `site`, `subsite` or `tenant` is meant. A customer is a person; a site is a thing.
 - **"token"** for an API key. The unsubscribe token is the only token; keys are keys.
 - **"form"** for the contact endpoint. There is exactly one, it is not configurable, and calling it "a form" invites a form builder that is explicitly out of scope.
 - **"login"** for a key. Keys are not users; no key maps to a WordPress account.

@@ -8,20 +8,26 @@ namespace Templ\Headless\Tests\Integration;
 use PHPUnit\Framework\TestCase;
 
 /**
- * Base for the integration suite: knows the main site and the sample subsite by
- * their blog IDs and URLs, so a test can act on either.
+ * Base for the integration suite: resolves the site under test to its blog ID
+ * and URL, so a test can act on it without caring about the network shape.
+ *
+ * Single-site is the default, so the site under test is the one and only site.
+ * Under multisite (TEMPL_HEADLESS_MULTISITE=1) the same tests run against the
+ * sample subsite, exercising the subdirectory URL and a non-main blog ID. The
+ * property names keep the `subsite_` prefix in both modes so the test bodies
+ * read identically; on single-site it simply names the only site there is.
  */
 abstract class IntegrationTestCase extends TestCase {
 
 	/**
-	 * The sample subsite's blog ID, discovered once.
+	 * The blog ID of the site under test, discovered once.
 	 *
 	 * @var int
 	 */
 	protected int $subsite_id;
 
 	/**
-	 * The sample subsite's home URL.
+	 * The home URL of the site under test.
 	 *
 	 * @var string
 	 */
@@ -30,13 +36,20 @@ abstract class IntegrationTestCase extends TestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		$slug = getenv( 'TEMPL_SAMPLE_SITE_SLUG' ) ?: 'customer-one';
-		$site = self::find_site_by_path( '/' . $slug . '/' );
+		if ( is_multisite() ) {
+			$slug = getenv( 'TEMPL_SAMPLE_SITE_SLUG' ) ?: 'customer-one';
+			$site = self::find_site_by_path( '/' . $slug . '/' );
 
-		$this->assertNotNull( $site, "The sample subsite '{$slug}' must exist. Reprovision with composer dev:reset." );
+			$this->assertNotNull( $site, "The sample subsite '{$slug}' must exist. Reprovision with composer dev:reset:multisite." );
 
-		$this->subsite_id  = (int) $site->blog_id;
-		$this->subsite_url = trailingslashit( get_home_url( $this->subsite_id ) );
+			$this->subsite_id  = (int) $site->blog_id;
+			$this->subsite_url = trailingslashit( get_home_url( $this->subsite_id ) );
+
+			return;
+		}
+
+		$this->subsite_id  = get_current_blog_id();
+		$this->subsite_url = trailingslashit( get_home_url() );
 	}
 
 	/**

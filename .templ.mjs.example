@@ -7,11 +7,11 @@
 // server and are never touched by a deploy, which is the same contract the dev
 // stack keeps: this repo owns wp-content and only wp-content.
 //
-// Usage:
-//   pnpm deploy production
-//   pnpm deploy                 # target defaults to the current git branch
-//   pnpm deploy production -- --dry     # print the rsync command, run nothing
-//   pnpm deploy production -- --delete  # remove server files absent from here
+// Usage (always `pnpm run deploy`; bare `pnpm deploy` is a reserved builtin):
+//   pnpm run deploy production
+//   pnpm run deploy                 # target defaults to the current git branch
+//   pnpm run deploy production -- --dry     # print the rsync command, run nothing
+//   pnpm run deploy production -- --delete  # remove server files absent from here
 
 const config = {
 	options: {
@@ -32,27 +32,31 @@ const config = {
 
 	templs: {
 		production: {
-			app: 0000, // Templ app id.
-			host: 'your-server.templ.io',
+			app: 0000, // Templ app id, from the Templ panel.
+			host: 'your-server.templ.io', // The SSH host from the Templ panel.
 			port: 22,
 
 			// Land the overlay in the live wp-content. Adjust the app_<id> path
 			// to wherever the document root's wp-content is on the target.
 			dst: 'app_0000/public/wp-content',
 
-			// Runs on the server after the files are in place. Networks the
+			// Runs on the server after the files are in place. Activates the
 			// plugins and flushes rewrites so a brand-new plugin is live without
 			// a manual admin visit. wp-cli is expected on the Templ host.
-			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard',
+			//
+			// This is the single-site form. If the target runs multisite, add
+			// --network to the activate:
+			//   wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard
+			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter && wp rewrite flush --hard',
 		},
 
-		// A second target, reached with `pnpm deploy staging`.
+		// A second target, reached with `pnpm run deploy staging`.
 		staging: {
 			app: 0000,
 			host: 'staging.templ.io',
 			port: 22,
 			dst: 'app_0000/public/wp-content',
-			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter --network && wp rewrite flush --hard',
+			sshCmd: 'wp plugin activate templ-contact-form templ-newsletter && wp rewrite flush --hard',
 		},
 	},
 };

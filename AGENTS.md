@@ -1,8 +1,8 @@
 # AGENTS.md
 
-A boilerplate for running WordPress multisite as a headless backend.
-An agency forks this repo, brings up the dev stack, and hosts many customer sites as subsites of one network.
-Each subsite exposes REST endpoints for a contact form and a newsletter, guarded by per-site API keys managed from WP Admin and WP-CLI.
+A boilerplate for running WordPress as a headless backend.
+It boots a single site by default; an agency that needs to host many customer sites as isolated subsites of one network turns on multisite with `TEMPL_HEADLESS_MULTISITE=1`.
+Each site exposes REST endpoints for a contact form and a newsletter, guarded by per-site API keys managed from WP Admin and WP-CLI.
 
 This file records the decisions that are already paid for.
 `CONTEXT.md` defines the words.
@@ -14,16 +14,18 @@ There is no PHP, Composer or WP-CLI on the host, and none is needed.
 Everything runs through `compose.yaml` (podman, but `docker compose` is interchangeable).
 
 ```sh
-composer dev:up               # dev network on :8080 (override with TEMPL_HEADLESS_PORT), admin/password
+composer dev:up               # single site on :8080 (override with TEMPL_HEADLESS_PORT), admin/password
+composer dev:up:multisite     # same, but as a subdirectory network with a sample subsite
 composer dev:down
-composer dev:reset            # tear the volumes down and reprovision from empty
+composer dev:reset            # tear the volumes down and reprovision single-site from empty
+composer dev:reset:multisite  # reprovision as multisite from empty (needed to switch mode)
 composer dev:logs
 composer dev:install          # composer install in the pinned image
 composer dev:lint             # phpcs
 composer dev:php-floor        # parse every file on the oldest supported PHP
 composer dev:test             # unit suite, then integration suite (needs the stack up)
-composer dev:test:multisite   # multisite suite (needs the stack up)
-composer dev:cli wp plugin list --url=http://localhost:8080/customer-one/
+composer dev:test:multisite   # multisite suite (needs a multisite stack up)
+composer dev:cli wp plugin list
 ```
 
 The same lifecycle is mirrored in `package.json` for people who reach for pnpm first:
@@ -78,7 +80,13 @@ Nothing else.
 
 **To add a whole plugin:** copy the shape of `templ-contact-form` (main file with the MU-plugin dependency guard, `src/` modules, a versioned REST namespace), add its directory to the bind mounts in `compose.yaml` (the `x-wp-content` anchor, the `wordpress` service, the `init` service, and both test services), and add it to the activation loop in `tools/init.sh`.
 
-## Multisite
+## Multisite (opt-in extension)
+
+Multisite is off by default. The default `dev:up` runs `wp core install` for one plain site; `TEMPL_HEADLESS_MULTISITE=1` (via `composer dev:up:multisite` / `dev:reset:multisite`) runs `wp core multisite-install` instead and creates the sample subsite. `tools/init.sh` is the branch point, and switching mode needs an empty database, which is why there are separate `reset` scripts. The feature code is identical in both modes: the same CPTs, the same key store, the same routes. Multisite only changes how many isolated copies of them exist.
+
+Reach for it when you host many customer sites on one install and need them isolated; a single site needs none of this and pays none of its complexity.
+
+Everything below applies once multisite is on.
 
 The MU plugin runs on every site of the network with no activation step, and that is what makes API keys per-site: the key post type is registered everywhere, so a key minted on subsite A lives in subsite A's tables and is invisible to subsite B.
 This is not a convenience; it is the promise the agency model rests on, and `tests/multisite/KeyIsolationTest.php` is the test that guards it.
@@ -91,6 +99,7 @@ This is not a convenience; it is the promise the agency model rests on, and `tes
 Anything in a CPT, in post meta, or in a site option is automatically per-site.
 Anything in a network option is shared across every tenant.
 Reach for the former unless a value genuinely belongs to the whole network, because the default failure mode of the latter is one customer seeing another's data.
+This matters under multisite; on a single site there is only one tenant, so a site option and a network option amount to the same thing.
 
 ## Auth contract
 
@@ -114,7 +123,7 @@ Three suites, mirroring the reference plugin `~/templio/plugin`:
 
 - **Unit** (`composer dev:test`, first half): Brain Monkey, no site booted. Only side-effect-free modules belong here: key hashing, the two validators, the unsubscribe token, the rate-limit arithmetic. Anything that calls `add_action` or `register_post_type` at include time is not a unit test.
 - **Integration** (`composer dev:test`, second half): real HTTP against the running site, over the compose network. Real HTTP rather than `rest_do_request()` on purpose, because the `.htaccess` rule that hands the `Authorization` header to PHP is part of what is under test; an in-process dispatch would pass while a real client's header was being dropped.
-- **Multisite** (`composer dev:test:multisite`): the same network, tests that cross site boundaries. Key isolation, data isolation, and zero-touch onboarding.
+- **Multisite** (`composer dev:test:multisite`): the same network, tests that cross site boundaries. Key isolation, data isolation, and zero-touch onboarding. Needs a multisite stack (`composer dev:reset:multisite` first); it fails loudly against a single-site install rather than skipping.
 
 **A test that cannot fail is worse than no test.**
 The integration bootstrap fails loudly when the stack is down or a plugin is missing rather than skipping, because a silently skipped suite turns "nothing is running" into a green tick.
@@ -168,7 +177,9 @@ The failure mode is a dropped counter, which only ever lets a request through, n
 Configuration lives in `.templ.mjs` (gitignored, names real servers); `.templ.mjs.example` is the committed template.
 What ships is `wp-content` and only `wp-content`, the same contract the dev stack keeps: core, uploads and `wp-config.php` live on the server and a deploy never touches them.
 
-**On an existing network the MU plugin must be deployed before the feature plugins are activated**, because the feature plugins refuse to bootstrap without it (they degrade to an admin notice rather than a fatal, so a missed step is visible, not a white screen).
+**On an existing install the MU plugin must be deployed before the feature plugins are activated**, because the feature plugins refuse to bootstrap without it (they degrade to an admin notice rather than a fatal, so a missed step is visible, not a white screen).
+
+The example `sshCmd` activates the plugins for a single site; a multisite target adds `--network` to the activate.
 
 ## Extension points
 

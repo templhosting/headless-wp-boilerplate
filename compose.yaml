@@ -7,6 +7,11 @@ name: templ-headless
 # came to hand a new subsite the wrong theme.
 x-wordpress-env: &wordpress-env
   TEMPL_HEADLESS_PORT: "${TEMPL_HEADLESS_PORT:-8080}"
+  # Single-site is the default. Set TEMPL_HEADLESS_MULTISITE=1 (and reprovision
+  # with `composer dev:reset:multisite`) to stand up the subdirectory network
+  # instead. init.sh reads this to choose between `wp core install` and `wp core
+  # multisite-install`, and to decide whether to create the sample subsite.
+  TEMPL_HEADLESS_MULTISITE: "${TEMPL_HEADLESS_MULTISITE:-0}"
   WORDPRESS_DB_HOST: db
   WORDPRESS_DB_NAME: wordpress
   WORDPRESS_DB_USER: wordpress
@@ -29,14 +34,16 @@ x-wordpress-env: &wordpress-env
     // dev stack wants updates off anyway: core here comes from a pinned
     // image, and a site that updated itself would no longer match it.
     define( 'DISALLOW_FILE_MODS', true );
-    // Multisite has no "activate this theme everywhere" switch, only an
-    // allowlist. This is what makes a site created from Network Admin
-    // headless the moment it exists, with no activation step.
+    // Makes the headless theme the default for any new site. On single-site
+    // this is what the one site boots with; under multisite it has no
+    // "activate this theme everywhere" switch, only an allowlist, so this is
+    // what makes a site created from Network Admin headless the moment it
+    // exists, with no activation step.
     define( 'WP_DEFAULT_THEME', 'templ-headless-theme' );
-    // The MULTISITE constants are deliberately absent: `wp core
-    // multisite-install` appends its own block to wp-config.php, and
-    // defining them here as well makes PHP warn about every one of them
-    // on every request for the life of the container.
+    // The MULTISITE constants are deliberately absent even when the multisite
+    // path runs: `wp core multisite-install` appends its own block to
+    // wp-config.php, and defining them here as well makes PHP warn about every
+    // one of them on every request for the life of the container.
 
 # The wp-content overlay. WordPress core lives in the named volume and stays
 # out of git; this repo owns nothing but the code it ships. Every container
@@ -95,9 +102,10 @@ services:
       - ./tools/apache-loopback.conf:/etc/apache2/conf-enabled/templ-loopback.conf:ro
       - ./tools/php-dev.ini:/usr/local/etc/php/conf.d/zz-templ-dev.ini:ro
 
-  # Idempotent provisioning: installs the network, creates the sample subsite
-  # and activates the theme and plugins. Runs on every `up` and does nothing on
-  # the second run.
+  # Idempotent provisioning: installs the site (single-site by default, or the
+  # subdirectory network when TEMPL_HEADLESS_MULTISITE=1), creates the sample
+  # subsite under multisite, and activates the theme and plugins. Runs on every
+  # `up` and does nothing on the second run.
   init:
     image: docker.io/wordpress:cli-php8.3
     depends_on:

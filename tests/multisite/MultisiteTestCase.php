@@ -50,7 +50,7 @@ abstract class MultisiteTestCase extends TestCase {
 		$slug = getenv( 'TEMPL_SAMPLE_SITE_SLUG' ) ?: 'customer-one';
 		$site = self::find_site_by_path( '/' . $slug . '/' );
 
-		$this->assertNotNull( $site, "The sample subsite '{$slug}' must exist. Reprovision with composer dev:reset." );
+		$this->assertNotNull( $site, "The sample subsite '{$slug}' must exist. Reprovision with composer dev:reset:multisite." );
 
 		$this->subsite_id  = (int) $site->blog_id;
 		$this->subsite_url = trailingslashit( get_home_url( $this->subsite_id ) );

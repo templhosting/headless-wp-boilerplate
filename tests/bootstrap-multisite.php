@@ -13,7 +13,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 $templ_wp_load = getenv( 'TEMPL_WP_LOAD' ) ?: '/var/www/html/wp-load.php';
 
 if ( ! file_exists( $templ_wp_load ) ) {
-	fwrite( STDERR, "WordPress not found at {$templ_wp_load}. Start the network first: composer dev:up\n" );
+	fwrite( STDERR, "WordPress not found at {$templ_wp_load}. Start the network first: composer dev:up:multisite\n" );
 	exit( 1 );
 }
 
@@ -39,6 +39,6 @@ if ( ! get_sites(
 		'number' => 1,
 	]
 ) ) {
-	fwrite( STDERR, "The sample subsite '{$templ_sample_slug}' does not exist. Reprovision with composer dev:reset.\n" );
+	fwrite( STDERR, "The sample subsite '{$templ_sample_slug}' does not exist. Reprovision with composer dev:reset:multisite.\n" );
 	exit( 1 );
 }

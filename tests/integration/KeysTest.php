@@ -7,12 +7,15 @@ namespace Templ\Headless\Tests\Integration;
 
 use Templ\Headless\Keys;
 use Templ\Headless\Keys\Store;
+use Templ\Headless\Tests\Shared\SwitchesSites;
 
 /**
  * The key store against the real database: create, verify, revoke, and the
  * guarantee that the plaintext is never handed back after creation.
  */
 final class KeysTest extends IntegrationTestCase {
+
+	use SwitchesSites;
 
 	/**
 	 * @var int[]
@@ -21,7 +24,7 @@ final class KeysTest extends IntegrationTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
-		switch_to_blog( $this->subsite_id );
+		$this->switch_to_site( $this->subsite_id );
 	}
 
 	protected function tearDown(): void {
@@ -29,7 +32,7 @@ final class KeysTest extends IntegrationTestCase {
 			Store\delete( $id );
 		}
 		$this->created = [];
-		restore_current_blog();
+		$this->restore_site();
 		parent::tearDown();
 	}
 
