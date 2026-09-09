@@ -1,21 +1,33 @@
 # Headless WP Boilerplate
 
-WordPress as a headless backend.
-One site by default, switchable to a multisite network when you need to host many customer sites that must not see each other's data.
-Each site exposes REST endpoints for a contact form and a newsletter, guarded by per-site API keys.
+WordPress as a headless backend: the public frontend is closed and everything is served over REST.
+One site by default, switchable to a multisite network when you need many customer sites that cannot see each other's data.
 
-This repository is a `wp-content` overlay and nothing else: must-use plugins, two feature plugins, one theme.
-Core, uploads and the database never enter git.
-In development the overlay is bind-mounted into the official `wordpress` image; in production it is rsynced to a [Templ](https://templ.io) host.
+- **AI-first** - a decision record and a glossary, so a coding agent extends this codebase instead of guessing at it.
+- **One-command deploy to [Templ](https://templ.io)** - `pnpm run deploy production` rsyncs the overlay and activates the plugins, and a bundled agent skill covers WP-CLI, cache purges and multisite over SSH.
+- **Two example plugins** - a basic contact form and a newsletter subscriber list - showing the REST, storage and admin patterns to copy.
+- **Per-site API keys** guarding every route, minted in WP Admin or WP-CLI.
+- **A closed frontend** - anonymous visitors go to `wp-login.php`, logged-in users to the admin, and nothing is served but the API.
+- **Tenant isolation under multisite** - each subsite gets its own keys, data and admin screens, invisible to every other site.
+- **Seven hooks** for extending without forking.
+
+This repository is a `wp-content` overlay and nothing else: must-use plugins, two example feature plugins, one theme.
+Core, uploads and the database never enter git - bind-mounted into the official `wordpress` image in development, rsynced to a [Templ](https://templ.io) host in production.
+
+The contact form and the newsletter are deliberately minimal.
+They exist to demonstrate the shape of a plugin on this stack - a versioned REST namespace, a custom post type, key-protected routes, an admin screen - so you can copy one and delete both.
+[`docs/extending.md`](docs/extending.md) walks through building your own on top of the same key auth.
 
 ## Setup with an AI agent
 
-This repo is built to be set up by an AI coding agent.
+This repo is written to be handed to an AI coding agent.
+Every decision that is already paid for is recorded with its reasoning, so an agent extends the codebase instead of re-deriving it - and the same notes work just as well for a human reading in.
+
 Clone it, open it in your AI coding harness, and say:
 
 > Guide me through setting up this headless WordPress boilerplate for my project and deploying it to Templ.
 
-The agent will interview you about naming, single-site vs multisite, and hosting before it touches anything - that script lives in `AGENTS.md` > Setting this repo up for a human.
+The agent interviews you about naming, single-site vs multisite and hosting before it touches anything - that script lives in `AGENTS.md` > Setting this repo up for a human.
 Then it works through the steps below.
 
 ## Setup by hand
@@ -41,6 +53,7 @@ Decide the first two before booting: both are cheap now and expensive later.
    ```sh
    curl http://localhost:8080/wp-json/templ-headless/v1/ping -H "Authorization: Bearer $KEY"
    ```
+   A headless frontend should proxy these through its own server so the key stays server-side; `docs/api.md` shows the shape.
 6. **Deploy to Templ.** Create the website in the [Templ panel](https://templ.io), upload your public SSH key, then:
    ```sh
    cp .templ.mjs.example .templ.mjs    # gitignored; names real hosts
@@ -60,14 +73,10 @@ composer dev:cli wp plugin list
 pnpm run deploy production
 ```
 
-## What you get
+## Admin screens
 
-- Three admin screens - **Settings > API keys**, and top-level **Contact Form** and **Newsletter** - with an independent copy per site under multisite.
-- Key-protected REST endpoints for submissions and subscribers. Every route needs a key except the token unsubscribe, which is opened from an email client that cannot carry one.
-- A theme that closes the public frontend: anonymous visitors are sent to `wp-login.php`, logged-in users to the admin, and nothing is served but the API.
-- Seven hooks for extending without forking.
-
-A headless frontend should proxy these endpoints through its own server so the key stays server-side.
+**Settings > API keys** mints and revokes keys; top-level **Contact Form** and **Newsletter** read the data they collect.
+Under multisite each subsite gets its own independent copy of all three.
 
 ## Where to look next
 
